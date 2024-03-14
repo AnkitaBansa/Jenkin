@@ -1,0 +1,72 @@
+pipeline {
+    agent any
+
+    stages {
+        stage('Build') {
+            steps {
+                // Use Maven to build the code
+                sh 'mvn clean package'
+            }
+        }
+
+        stage('Unit and Integration Tests') {
+            steps {
+                // Use JUnit for unit tests and your integration test framework
+                sh 'mvn test'
+            }
+        }
+
+        stage('Code Analysis') {
+            steps {
+                // Use a code analysis tool like SonarQube
+                // Execute SonarQube scanner
+                withSonarQubeEnv('SonarQubeServer') {
+                    sh 'mvn sonar:sonar'
+                }
+            }
+        }
+
+        stage('Security Scan') {
+            steps {
+                // Use a security scanning tool like OWASP Dependency-Check
+                sh 'mvn org.owasp:dependency-check-maven:check'
+            }
+        }
+
+        stage('Deploy to Staging') {
+            steps {
+                // Use a deployment tool like AWS CLI to deploy to staging
+                sh 'aws deploy staging'
+            }
+        }
+
+        stage('Integration Tests on Staging') {
+            steps {
+                // Run integration tests on the staging environment
+                sh 'mvn verify -Denv=staging'
+            }
+        }
+
+        stage('Deploy to Production') {
+            steps {
+                // Use AWS CLI to deploy to production
+                sh 'aws deploy production'
+            }
+        }
+    }
+
+    post {
+        success {
+            // Send email notification on successful build
+            emailext subject: "Pipeline Success",
+                      body: "Your Jenkins Pipeline has completed successfully.",
+                      to: "ankitabansal1788@gmail.com"
+        }
+        failure {
+            // Send email notification on failed build
+            emailext subject: "Pipeline Failure",
+                      body: "Your Jenkins Pipeline has failed. Please check logs for details.",
+                      to: "ankitabansal1788@gmail.com"
+        }
+    }
+}
